@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KelolaDuit</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="header">
+        <img src="assets/logo.png">
+    </div>
+
+    <div class="container">
+        <!-- Dashboard Page -->
+        <div class="page active" id="dashboard-page">
+            <div class="summary-cards">
+                <div class="summary-card income">
+                    <h3>Total Pemasukan</h3>
+                    <div class="amount" id="total-income">Rp 0</div>
+                </div>
+                <div class="summary-card expense">
+                    <h3>Total Pengeluaran</h3>
+                    <div class="amount" id="total-expense">Rp 0</div>
+                </div>
+                <div class="summary-card balance">
+                    <h3>Saldo</h3>
+                    <div class="amount" id="balance">Rp 0</div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>Tambah Transaksi Baru</h2>
+                <form class="add-form" id="transaction-form">
+                    <div class="form-row">
+                        <input type="text" id="description" placeholder="Deskripsi" required>
+                        <input type="number" id="amount" placeholder="Jumlah (Rp)" required>
+                    </div>
+                    <div class="form-row">
+                        <select id="type" required>
+                            <option value="">Pilih Tipe</option>
+                            <option value="income">Pemasukan</option>
+                            <option value="expense">Pengeluaran</option>
+                        </select>
+                        <select id="payment-method" required>
+                            <option value="">Metode Pembayaran</option>
+                            <option value="Tunai">Tunai</option>
+                            <option value="Transfer Bank">Transfer Bank</option>
+                            <option value="Shopeepay">Shopeepay</option>
+                            <option value="Gopay">Gopay</option>
+                            <option value="OVO">OVO</option>
+                            <option value="DANA">DANA</option>
+                            <option value="QRIS">QRIS</option>
+                            <option value="PayLater">PayLater</option>
+                        </select>
+                        <input type="date" id="date" required>
+                    </div>
+                    <button type="submit" class="btn">Tambah Transaksi</button>
+                </form>
+            </div>
+
+            <div class="section">
+                <h2>Data Transaksi Bulan Ini</h2>
+                <select id="filter-method" 
+                    style="margin-bottom: 10px; padding: 10px; width: 200px;">
+                        <option value="all">Semua Metode</option>
+                        <option value="Tunai">Tunai</option>
+                        <option value="Transfer Bank">Transfer Bank</option>
+                        <option value="Shopeepay">Shopeepay</option>
+                        <option value="Gopay">Gopay</option>
+                        <option value="OVO">OVO</option>
+                        <option value="DANA">DANA</option>
+                        <option value="QRIS">QRIS</option>
+                        <option value="PayLater">PayLater</option>
+                </select>
+                <button id="exportPDF" class="btn" style="margin-bottom: 15px;">📄 Export PDF</button>
+                <div style="overflow-x: auto;">
+                    <table id="transactions-table">
+                        <thead>
+                            <tr>
+                                <th>Tanggal</th>
+                                <th>Deskripsi</th>
+                                <th>Tipe</th>
+                                <th>Metode</th>
+                                <th>Jumlah</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactions-body">
+                        </tbody>
+                    </table>
+
+                    <div class="section" id="smart-insight" style="margin-top: 20px;">
+                        <h2>Analisis Bulanan</h2>
+                        <div id="insight-content" style="color:#444; font-size: 15px; line-height: 1.6;">Memuat analisis...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- History Page -->
+        <div class="page" id="history-page">
+            <div class="section">
+                <div class="card">
+                    <h2>📊 Grafik Pengeluaran 12 Bulan</h2>
+                    <canvas id="expenseChart" height="200"></canvas>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="card">
+                    <h2>Riwayat Bulan Lainnya</h2>
+                    <div class="month-grid" id="month-grid">
+                    <!-- Month cards will be inserted here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Month Detail Page -->
+        <div class="page" id="month-detail-page">
+            <button id="exportPDFMonth" class="btn" style="margin-bottom: 15px;">📄 Export PDF Bulan Ini</button>
+            <div class="section">
+                <button class="btn" onclick="showPage('history-page')" style="margin-bottom: 20px;">← Kembali</button>
+                <h2 id="month-detail-title">Detail Bulan</h2>
+                
+                <div class="summary-cards" style="margin-top: 20px;">
+                    <div class="summary-card income">
+                        <h3>Total Pemasukan</h3>
+                        <div class="amount" id="month-detail-income">Rp 0</div>
+                    </div>
+                    <div class="summary-card expense">
+                        <h3>Total Pengeluaran</h3>
+                        <div class="amount" id="month-detail-expense">Rp 0</div>
+                    </div>
+                    <div class="summary-card balance">
+                        <h3>Saldo</h3>
+                        <div class="amount" id="month-detail-balance">Rp 0</div>
+                    </div>
+                </div>
+
+                <div style="overflow-x: auto; margin-top: 20px;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Tanggal</th>
+                                <th>Deskripsi</th>
+                                <th>Tipe</th>
+                                <th>Metode</th>
+                                <th>Jumlah</th>
+                            </tr>
+                        </thead>
+                        <tbody id="month-detail-body">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Profile Page -->
+        <div class="page" id="profile-page">
+            <div class="profile-section">
+                <div class="profile-avatar"></div>
+                <div class="profile-info">
+                    <h2>Pengguna KelolaDuit</h2>
+                    <p style="color: #666;">Bergabung sejak <span id="profile-join-date">-</span> </p>
+                </div>
+
+                <div class="profile-stats">
+                    <div class="profile-stat">
+                        <div class="label">Total Transaksi</div>
+                        <div class="value" id="profile-total-transactions">0</div>
+                    </div>
+                    <div class="profile-stat">
+                        <div class="label">Bulan Tercatat</div>
+                        <div class="value" id="profile-total-months">0</div>
+                    </div>
+                    <div class="profile-stat">
+                        <div class="label">Metode Favorit</div>
+                        <div class="value" id="profile-fav-method" style="font-size: 16px;">-</div>
+                    </div>
+                    <div class="profile-stat">
+                        <div class="label">Rata-rata/Bulan</div>
+                        <div class="value" id="profile-avg-month" style="font-size: 16px;">Rp 0</div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 30px; text-align: center; color: #666; font-size: 14px;">
+                    <p>💡 Tips: Catat semua transaksimu untuk</p>
+                    <p>kontrol keuangan yang lebih baik!</p>
+                </div>
+
+                <div class="account-buttons">
+                    <button class="btn-logout" onclick="logoutUser()">Logout</button>
+                    <button class="btn-delete" onclick="deleteUserAccount()">Hapus Akun</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <div class="nav-item active" onclick="showPage('dashboard-page')">
+            <div class="nav-icon">📊</div>
+            <div class="nav-label">Dashboard</div>
+        </div>
+        <div class="nav-item" onclick="showPage('history-page')">
+            <div class="nav-icon">📅</div>
+            <div class="nav-label">Riwayat</div>
+        </div>
+        <div class="nav-item" onclick="showPage('profile-page')">
+            <div class="nav-icon">👤</div>
+            <div class="nav-label">Profil</div>
+        </div>
+    </div>
+
+    <script type="module" src="auth.js"></script>
+    <script type="module" src="script.js"></script>
+</body>
+</html>

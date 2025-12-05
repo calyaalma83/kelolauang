@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daftar</title>
+    <link rel="stylesheet" href="auth.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <img src="assets/logo.png">
+            </div>
+
+            <form class="auth-form" id="register-form">
+                <h2>Buat Akun Baru</h2>
+                <p class="subtitle">Mulai kelola keuanganmu dengan mudah</p>
+
+                <div class="form-group">
+                    <label for="fullname">Nama Lengkap</label>
+                    <input 
+                        type="text" 
+                        id="fullname" 
+                        placeholder="Masukkan nama lengkap" 
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        placeholder="nama@email.com" 
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <div class="password-wrapper">
+                        <input 
+                            type="password" 
+                            id="password" 
+                            placeholder="Minimal 8 karakter" 
+                            required
+                            minlength="8"
+                        >
+                        <span class="toggle-password" data-target="password">👁️</span>
+                    </div>
+                    <small class="form-hint">Password harus minimal 8 karakter</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirm-password">Konfirmasi Password</label>
+                    <div class="password-wrapper">
+                        <input 
+                            type="password" 
+                            id="confirm-password" 
+                            placeholder="Ulangi password" 
+                            required
+                            minlength="8"
+                        >
+                        <span class="toggle-password" data-target="confirm-password">👁️</span>
+                    </div>
+                </div>
+
+                <label class="checkbox-container terms">
+                    <input type="checkbox" id="terms" required>
+                    <span>Saya setuju dengan <a href="#">Syarat & Ketentuan</a> dan <a href="#">Kebijakan Privasi</a></span>
+                </label>
+
+                <button type="submit" class="btn-primary">
+                    Daftar Sekarang
+                </button>
+
+                <div class="divider">
+                    <span>atau</span>
+                </div>
+
+                <button type="button" class="btn-google">
+                    <svg width="18" height="18" viewBox="0 0 18 18">
+                        <path fill="#4285F4" d="M16.51 8H8.98v3h4.3c-.18 1-.74 1.48-1.6 2.04v2.01h2.6a7.8 7.8 0 0 0 2.38-5.88c0-.57-.05-.66-.15-1.18z"/>
+                        <path fill="#34A853" d="M8.98 17c2.16 0 3.97-.72 5.3-1.94l-2.6-2a4.8 4.8 0 0 1-7.18-2.54H1.83v2.07A8 8 0 0 0 8.98 17z"/>
+                        <path fill="#FBBC05" d="M4.5 10.52a4.8 4.8 0 0 1 0-3.04V5.41H1.83a8 8 0 0 0 0 7.18l2.67-2.07z"/>
+                        <path fill="#EA4335" d="M8.98 4.18c1.17 0 2.23.4 3.06 1.2l2.3-2.3A8 8 0 0 0 1.83 5.4L4.5 7.49a4.77 4.77 0 0 1 4.48-3.3z"/>
+                    </svg>
+                    Daftar dengan Google
+                </button>
+
+                <p class="auth-switch">
+                    Sudah punya akun? <a href="login.html">Masuk di sini</a>
+                </p>
+            </form>
+        </div>
+
+        <div class="auth-footer">
+            <p>&copy; 2025 KelolaDuit. All rights reserved.</p>
+        </div>
+    </div>
+
+    <script type="module" src="auth.js"></script>
+</body>
+</html>

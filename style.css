@@ -1,0 +1,558 @@
+/* RESET & GLOBAL ---------------------------------------------------- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    width: 100%;
+    min-height: 100%;
+    scroll-behavior: smooth;
+    overflow-x: hidden;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+    min-height: 100vh;
+    padding-bottom: 80px;
+}
+
+/* HEADER ------------------------------------------------------------ */
+.header {
+    background: linear-gradient(135deg, #2e7d32 0%, #43a047 100%);
+    color: white;
+    padding: 18px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    border-bottom-left-radius: 20px;
+    border-bottom-right-radius: 20px;
+}
+
+.header img {
+    height: 75px;      /* ukuran logo utama */
+    width: auto;
+    object-fit: contain;
+}
+
+/* CONTAINER --------------------------------------------------------- */
+.container {
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 0 20px;
+}
+
+.page {
+    display: none;
+}
+
+.page.active {
+    display: block;
+}
+
+/* DASHBOARD --------------------------------------------------------- */
+.summary-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.summary-card {
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    transition: transform 0.3s;
+}
+
+.summary-card:hover {
+    transform: translateY(-5px);
+}
+
+.summary-card h3 {
+    color: #666;
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+.summary-card .amount {
+    font-size: 28px;
+    font-weight: bold;
+    color: #2e7d32;
+}
+
+.summary-card.expense .amount { color: #d32f2f; }
+.summary-card.balance .amount { color: #1976d2; }
+
+.section {
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+.section h2 {
+    color: #2e7d32;
+    margin-bottom: 15px;
+    font-size: 20px;
+}
+
+.add-form {
+    display: grid;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+}
+
+input, select, button {
+    padding: 12px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+}
+
+input:focus, select:focus {
+    outline: none;
+    border-color: #43a047;
+}
+
+.btn {
+    background: linear-gradient(135deg, #2e7d32 0%, #43a047 100%);
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    transition: opacity 0.3s;
+}
+
+.btn:hover {
+    opacity: 0.9;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+th, td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+th {
+    background: #f5f5f5;
+    color: #2e7d32;
+    font-weight: bold;
+}
+
+.income { color: #2e7d32; font-weight: bold; }
+.expense { color: #d32f2f; font-weight: bold; }
+
+.delete-btn {
+    background: #d32f2f;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.delete-btn:hover {
+    background: #b71c1c;
+}
+
+/* HISTORY ----------------------------------------------------------- */
+.month-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+.month-card {
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    cursor: pointer;
+    transition: all 0.3s;
+    border: 3px solid transparent;
+}
+
+.month-card:hover {
+    transform: translateY(-5px);
+    border-color: #43a047;
+}
+
+.month-card h3 {
+    color: #2e7d32;
+    margin-bottom: 15px;
+    font-size: 18px;
+}
+
+.month-card .stat {
+    display: flex;
+    justify-content: space-between;
+    margin: 8px 0;
+    font-size: 14px;
+}
+
+.month-card .stat span:first-child {
+    color: #666;
+}
+
+/* PROFILE ----------------------------------------------------------- */
+.profile-section {
+    background: white;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.profile-avatar {
+    width: 100px;
+    height: 100px;
+    background: linear-gradient(135deg, #2e7d32 0%, #43a047 100%);
+    border-radius: 50%;
+    margin: 0 auto 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+    color: white;
+}
+
+.profile-info { text-align: center; margin-bottom: 30px; }
+
+.profile-info h2 {
+    color: #2e7d32;
+    margin-bottom: 10px;
+}
+
+.profile-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.profile-stat {
+    background: #f5f5f5;
+    padding: 15px;
+    border-radius: 10px;
+    text-align: center;
+}
+
+.profile-stat .label {
+    color: #666;
+    font-size: 13px;
+    margin-bottom: 5px;
+}
+
+.profile-stat .value {
+    font-size: 24px;
+    font-weight: bold;
+    color: #2e7d32;
+}
+
+.account-buttons {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  margin-top: 35px;
+  width: 100%;
+  padding: 0 30px;
+}
+
+.btn-logout,
+.btn-delete {
+  width: 45%;
+  padding: 14px;
+  text-align: center;
+  border-radius: 10px;
+  font-size: 15px;
+  border: none;
+  cursor: pointer;
+}
+
+/* Logout (merah normal) */
+.btn-logout {
+  background: #d32f2f;
+  color: white;
+}
+
+/* Hapus Akun (merah lebih gelap) */
+.btn-delete {
+  background: #a00000;
+  color: white;
+}
+
+.btn-delete:hover {
+    background: #7b0000;
+}
+
+/* BOTTOM NAV -------------------------------------------------------- */
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: space-around;
+    padding: 12px 0;
+    z-index: 1000;
+}
+
+.nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    color: #999;
+    transition: color 0.3s;
+    padding: 8px 20px;
+    border-radius: 10px;
+}
+
+.nav-item.active {
+    color: #2e7d32;
+    background: #e8f5e9;
+}
+
+.nav-item:hover {
+    color: #43a047;
+}
+
+.nav-icon { font-size: 24px; }
+.nav-label { font-size: 12px; }
+
+/* FILTER & EXPORT PDF --------------------------------------------- */
+.filter-bar {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+#filter-method {
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 2px solid #e0e0e0;
+    background: #ffffff;
+    font-size: 14px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+#filter-method:focus {
+    border-color: #43a047;
+}
+
+#filter-method option[value=""] {
+    color: #888;
+}
+
+#exportPDF,
+#exportPDFMonth {
+    background: #1976d2;
+    padding: 10px 16px;
+    border-radius: 10px;
+    font-size: 14px;
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+#exportPDF:hover,
+#exportPDFMonth:hover {
+    background: #0d47a1;
+    opacity: 0.9;
+}
+
+/* SMART INSIGHT --------------------------------------------------- */
+#smart-insight {
+    border-left: 5px solid #43a047;
+    background: #f5fff6;
+}
+
+#insight-content {
+    font-size: 15px;
+    color: #444;
+    line-height: 1.6;
+    margin-top: 10px;
+}
+
+.insight-item {
+    padding: 8px 0;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.insight-item:last-child {
+    border-bottom: none;
+}
+
+#expenseChart {
+    width: 100%;
+    max-height: 260px;
+}
+
+@media (max-width: 768px) {
+    body {
+        padding-bottom: 70px;
+    }
+
+    .header {
+        padding: 24px 18px;
+    }
+
+    .header img {
+        height: 45px;
+    }
+
+    .container {
+        margin: 15px auto;
+        padding: 0 12px;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .summary-cards {
+        grid-template-columns: 1fr;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+
+    .summary-card {
+        padding: 16px;
+    }
+
+    .summary-card .amount {
+        font-size: 24px;
+    }
+
+    .section {
+        padding: 16px;
+        margin-bottom: 15px;
+    }
+
+    .section h2 {
+        font-size: 18px;
+    }
+
+    input, select, button {
+        padding: 10px;
+        font-size: 13px;
+    }
+
+    table {
+        font-size: 12px;
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+
+    th, td {
+        padding: 8px 6px;
+        min-width: 80px;
+    }
+
+    .delete-btn {
+        padding: 5px 10px;
+        font-size: 11px;
+    }
+
+    .month-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .month-card {
+        padding: 16px;
+    }
+
+    .month-card h3 {
+        font-size: 16px;
+    }
+
+    .profile-section {
+        padding: 20px 16px;
+    }
+
+    .profile-avatar {
+        width: 80px;
+        height: 80px;
+        font-size: 32px;
+    }
+
+    .profile-stats {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+
+    .account-buttons {
+        max-width: 100%;
+        gap: 10px;
+    }
+
+    .btn-logout,
+    .btn-delete {
+        padding: 12px;
+        font-size: 14px;
+    }
+
+    .profile-stat .value {
+        font-size: 20px;
+    }
+
+    .bottom-nav {
+        padding: 8px 0;
+    }
+
+    .nav-item {
+        padding: 6px 12px;
+        gap: 3px;
+    }
+
+    .nav-icon {
+        font-size: 20px;
+    }
+
+    .nav-label {
+       font-size: 11px;
+    }
+
+    .filter-bar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    #filter-method,
+    #exportPDF {
+        width: 100%;
+    }
+}
