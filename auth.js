@@ -7,7 +7,10 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   onAuthStateChanged,
-  updateProfile
+  updateProfile,
+  deleteUser,
+  reauthenticateWithCredential,
+  EmailAuthProvider
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import {
   getFirestore,
@@ -381,16 +384,30 @@ toggleEls.forEach((el) => {
 
 window.deleteUserAccount = async function () {
   const user = auth.currentUser;
+
   if (!user) return alert("User tidak ditemukan!");
 
-  if (!confirm("⚠️ Yakin ingin menghapus akun Anda? Semua data akan hilang permanen.")) {
+  if (!confirm("⚠️ Yakin ingin menghapus akun? Semua data akan hilang permanen!")) {
     return;
   }
 
-  const uid = user.uid;
+  // Minta user masukkan password ulang
+  const password = prompt("Masukkan password Anda untuk konfirmasi:");
+
+  if (!password) {
+    alert("Penghapusan dibatalkan.");
+    return;
+  }
 
   try {
-    const transCol = collection(db, "users", uid, "transactions");
+    // Buat credential untuk re-auth
+    const credential = EmailAuthProvider.credential(user.email, password);
+
+    // Re-authentication (WAJIB)
+    await reauthenticateWithCredential(user, credential);
+
+    // Hapus data Firestore
+    const transCol = collection(db, "users", user.uid, "transactions");
     const snapshot = await getDocs(transCol);
 
     const deletePromises = [];
@@ -399,19 +416,31 @@ window.deleteUserAccount = async function () {
     });
 
     await Promise.all(deletePromises);
-    await deleteDoc(doc(db, "users", uid));
+    await deleteDoc(doc(db, "users", user.uid));
+
+    // Hapus akun Firebase Auth
     await deleteUser(user);
 
-    alert("Akun berhasil dihapus permanen.");
+    alert("Akun berhasil dihapus.");
     window.location.href = "login.html";
   }
 
   catch (err) {
     console.error(err);
-    if (err.code === "auth/requires-recent-login") {
-      alert("⚠️ Anda harus login ulang sebelum bisa menghapus akun.");
-    } else {
-      alert("Gagal menghapus akun.Coba lagi.")
+
+    if (err.code === "auth/wrong-password") {
+      alert("Password salah!");
+    }
+    else if (err.code === "auth/requires-recent-login") {
+      alert("Anda harus login ulang sebelum menghapus akun.");
+    }
+    else {
+      alert("Gagal menghapus akun. Coba lagi.");
     }
   }
 };
+
+window.updateFirebaseProfile = (data) => {
+  const user = window.getFirebaseUser();
+  return updateProfile(user, data);
+}

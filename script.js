@@ -6,7 +6,6 @@ import {
   addDoc,
   getDocs
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
-
 import { getApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
 
 const app = getApp();
@@ -15,6 +14,9 @@ const db = getFirestore(app);
 let transactions = {};
 let currentMonth = "";
 let expenseChart = null;
+let currentPage = 1;
+const rowsPerPage = 10;
+let transactionsData = [];
 
 function getCurrentMonth() {
   const now = new Date();
@@ -66,13 +68,20 @@ async function loadTransactionsFromFirestore() {
 
   snapshot.forEach(docItem => {
     const data = docItem.data();
-    const month = data.month || getCurrentMonth();
 
+    let month = data.month;
+    if (!month && data.date) {
+      const dt = new Date(data.date);
+      month = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}`;
+    }
+
+    if (!month) month = getCurrentMonth();
     if (!transactions[month]) transactions[month] = [];
 
     transactions[month].push({
       ...data,
-      id: docItem.id
+      id: docItem.id,
+      month: month
     });
   });
 
@@ -169,16 +178,49 @@ function showPage(pageId) {
 window.showPage = showPage;
 
 function updateDashboard() {
+  // --- RESET BULANAN: cek apakah reset perlu dijalankan ---
+  const today = new Date();
+  const isFirstDay = today.getDate() === 1;
+
+  const currentMonthKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`;
+  const lastResetMonth = localStorage.getItem("last_reset_month");
+
+  // Reset hanya sekali di tanggal 1
+  const shouldReset = isFirstDay && lastResetMonth !== currentMonthKey;
+
+  if (shouldReset) {
+    localStorage.setItem("last_reset_month", currentMonthKey);
+
+    const elTotalIncome = document.getElementById("total-income");
+    const elTotalExpense = document.getElementById("total-expense");
+    const elBalance = document.getElementById("balance");
+
+    if (elTotalIncome) elTotalIncome.textContent = "Rp 0";
+    if (elTotalExpense) elTotalExpense.textContent = "Rp 0";
+    if (elBalance) elBalance.textContent = "Rp 0";
+
+    const tbody = document.getElementById("transactions-body");
+    if (tbody) tbody.innerHTML = "";
+
+    transactionsData = [];
+    currentPage = 1;
+    renderPagination(0);
+
+    const insightEl = document.getElementById("insight-content");
+    if (insightEl) insightEl.innerHTML = "<p style='color:#777'>Belum ada data bulan ini</p>";
+
+    return; // stop → tidak hitung transaksi bulan lalu
+  }
+
+  // --- LANJUT NORMAL ---
   const monthData = transactions[currentMonth] || [];
   const filterEl = document.getElementById("filter-method");
   const filterMethod = filterEl ? filterEl.value : "all";
 
-  // FILTER DATA
   const filtered = filterMethod === "all"
     ? monthData
     : monthData.filter(t => t.payment === filterMethod);
 
-  // Hitung total income & expense
   let totalIncome = 0;
   let totalExpense = 0;
 
@@ -187,46 +229,26 @@ function updateDashboard() {
     else totalExpense += Number(t.amount || 0);
   });
 
-  // Update card summary
   const elTotalIncome = document.getElementById("total-income");
   const elTotalExpense = document.getElementById("total-expense");
   const elBalance = document.getElementById("balance");
+
   if (elTotalIncome) elTotalIncome.textContent = formatCurrency(totalIncome);
   if (elTotalExpense) elTotalExpense.textContent = formatCurrency(totalExpense);
   if (elBalance) elBalance.textContent = formatCurrency(totalIncome - totalExpense);
 
-  // Render table
-  const tbody = document.getElementById("transactions-body");
-  if (!tbody) return;
-  tbody.innerHTML = "";
+  transactionsData = filtered.map(t => ({
+    date: t.date,
+    description: t.description,
+    type: t.type,
+    payment: t.payment,
+    amount: t.amount,
+    id: t.id
+  }));
 
-  if (filtered.length === 0) {
-    tbody.innerHTML = `
-      <tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">
-        Tidak ada transaksi untuk metode ini
-      </td></tr>`;
-    // refresh insight too
-    generateSmartInsight();
-    return;
-  }
+  currentPage = 1;
+  renderTransactions();
 
-  filtered.forEach((t) => {
-    const row = tbody.insertRow();
-    row.innerHTML = `
-      <td>${formatDate(t.date)}</td>
-      <td>${t.description}</td>
-      <td><span class="${t.type}">${t.type === "income" ? "Pemasukan" : "Pengeluaran"}</span></td>
-      <td>${t.payment}</td>
-      <td class="${t.type}">${formatCurrency(Number(t.amount || 0))}</td>
-      <td>
-        <button class="delete-btn" onclick="deleteTransaction('${t.id}')">
-          Hapus
-        </button>
-      </td>
-    `;
-  });
-
-  // update insight
   generateSmartInsight();
 }
 
@@ -238,9 +260,7 @@ function updateHistory() {
   if (!grid) return;
   grid.innerHTML = "";
 
-  const keys = Object.keys(transactions)
-    .filter(m => m !== currentMonth)  
-    .sort();
+  const keys = Object.keys(transactions).sort();
 
   if (keys.length === 0) {
     grid.innerHTML = `
@@ -405,10 +425,7 @@ function updateProfile() {
     localUser.displayName ||
     "Pengguna KelolaDuit";
 
-  const photo =
-    (user && user.photoURL) ||
-    localUser.photoURL ||
-    `https://ui-avatars.com/api/?background=1976d2&color=fff&name=${encodeURIComponent(name)}`;
+  const photo = localUser.photoURL || (user && user.photoURL) || `https://ui-avatars.com/api/?background=1976d2&color=fff&name=${encodeURIComponent(name)}`;
 
   const titleEl = document.querySelector(".profile-info h2");
   if (titleEl) titleEl.textContent = name;
@@ -428,12 +445,17 @@ function updateProfile() {
   let totalTransactions = 0;
   let totalIncome = 0;
   let methods = {};
+  let totalExpense = 0;
 
   Object.values(transactions).forEach(data => {
     totalTransactions += data.length;
     data.forEach(t => {
       methods[t.payment] = (methods[t.payment] || 0) + 1;
-      if (t.type === "income") totalIncome += Number(t.amount || 0);
+      if (t.type === "income") {
+        totalIncome += Number(t.amount || 0);
+      } else if (t.type === "expense") {
+        totalExpense += Number(t.amount || 0);
+      }
     });
   });
 
@@ -446,6 +468,11 @@ function updateProfile() {
   document.getElementById("profile-total-transactions").textContent = totalTransactions;
   document.getElementById("profile-total-months").textContent = months;
   document.getElementById("profile-fav-method").textContent = favMethod;
+
+  document.getElementById("profile-total-income").textContent = formatCurrency(totalIncome);
+  document.getElementById("profile-total-expense").textContent = formatCurrency(totalExpense);
+  document.getElementById("profile-balance").textContent = formatCurrency(totalIncome - totalExpense);
+
   document.getElementById("profile-avg-month").textContent = formatCurrency(
     months ? Math.round(totalIncome / months) : 0
   );
@@ -468,6 +495,9 @@ function generateSmartInsight() {
     .filter(t => t.type === "expense")
     .reduce((a, b) => a + Number(b.amount || 0), 0);
 
+  const balance = totalIncome - totalExpense;
+
+  // Hitung metode favorit
   const methods = {};
   monthData.forEach(t => {
     methods[t.payment] = (methods[t.payment] || 0) + 1;
@@ -480,17 +510,36 @@ function generateSmartInsight() {
           methods[a] > methods[b] ? a : b
         );
 
-  let insight = `
+  // Persentase sisa
+  let percent = 0;
+  if (totalIncome > 0) {
+    percent = (balance / totalIncome) * 100;
+  }
+
+  let status = "";
+
+  if (balance < 0) {
+    status = `<p style="color:#d32f2f">❌ Pengeluaran lebih besar dari pemasukan! Awas overspending.</p>`;
+  } 
+  else if (percent < 1) {
+    status = `<p style="color:#d32f2f">🔥 Sisa saldo hampir habis. Kamu perlu lebih mengontrol pengeluaran.</p>`;
+  }
+  else if (percent < 10) {
+    status = `<p style="color:#ff9800">⚠️ Sisa saldo sangat tipis. Hati-hati ya.</p>`;
+  }
+  else if (percent < 30) {
+    status = `<p style="color:#4caf50">🙂 Keuanganmu stabil, tetap pertahankan.</p>`;
+  }
+  else {
+    status = `<p style="color:#2e7d32">👍 Keuanganmu sangat sehat bulan ini!</p>`;
+  }
+
+  const insight = `
     <p>📈 Pemasukan: <b>${formatCurrency(totalIncome)}</b></p>
     <p>📉 Pengeluaran: <b>${formatCurrency(totalExpense)}</b></p>
     <p>💳 Metode favorit: <b>${favMethod}</b></p>
+    ${status}
   `;
-
-  if (totalExpense > totalIncome) {
-    insight += `<p style="color:#d32f2f">⚠️ Pengeluaran lebih besar dari pemasukan.</p>`;
-  } else {
-    insight += `<p style="color:#2e7d32">👍 Keuanganmu sehat bulan ini.</p>`;
-  }
 
   const el = document.getElementById("insight-content");
   if (el) el.innerHTML = insight;
@@ -505,10 +554,10 @@ document.getElementById("transaction-form").addEventListener("submit", async fun
   const payment = document.getElementById("payment-method").value;
   const date = document.getElementById("date").value;
 
-  const newTrans = { date, description, type, payment, amount };
-
   const dt = new Date(date);
   const monthKey = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}`;
+
+  const newTrans = { date, description, type, payment, amount, month: monthKey }; // <-- FIX
 
   if (!transactions[monthKey]) transactions[monthKey] = [];
   transactions[monthKey].push(newTrans);
@@ -557,4 +606,194 @@ function exportCurrentMonthPDF() {
   });
 
   doc.save("Laporan-Bulan-Ini.pdf");
+}
+
+function toggleTips() {
+  const box = document.getElementById("tips-content");
+  const arrow = document.getElementById("tips-arrow");
+
+  if (box.style.display === "block") {
+      box.style.display = "none";
+      arrow.classList.remove("rotate");
+  } else {
+      box.style.display = "block";
+      arrow.classList.add("rotate");
+  }
+}
+window.toggleTips = toggleTips;
+
+function toggleFAQ(element) {
+  const faqItem = element.closest(".faq-item");
+  if (!faqItem) return;
+
+  const answer = faqItem.querySelector(".faq-answer");
+
+  // Tutup FAQ lain
+  document.querySelectorAll(".faq-item").forEach(item => {
+    if (item !== faqItem) {
+      item.classList.remove("faq-open");
+      const a = item.querySelector(".faq-answer");
+      if (a) a.style.display = "none";
+    }
+  });
+
+  // Toggle yang diklik
+  const isOpen = faqItem.classList.contains("faq-open");
+
+  if (isOpen) {
+    faqItem.classList.remove("faq-open");
+    answer.style.display = "none";
+  } else {
+    faqItem.classList.add("faq-open");
+    answer.style.display = "block";
+  }
+}
+
+// WAJIB biar bisa dipanggil dari HTML
+window.toggleFAQ = toggleFAQ;
+
+function toggleFAQBox() {
+  const faqBox = document.getElementById("faq-box");
+  const arrow = document.getElementById("faq-main-arrow");
+
+  if (!faqBox || !arrow) return;
+
+  const isOpen = faqBox.style.display === "block";
+
+  if (isOpen) {
+      faqBox.style.display = "none";
+      arrow.classList.remove("rotate");
+  } else {
+      faqBox.style.display = "block";
+      arrow.classList.add("rotate");
+  }
+}
+window.toggleFAQBox = toggleFAQBox;
+
+document.getElementById("profile-image-input").addEventListener("change", async function () {
+    const file = this.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        const base64 = e.target.result; // hasil gambar base64
+
+        // simpan ke localStorage
+        let localUser = JSON.parse(localStorage.getItem("keloladuit_user") || "{}");
+        localUser.photoURL = base64;
+        localStorage.setItem("keloladuit_user", JSON.stringify(localUser));
+
+        // update tampilan profil
+        updateProfile();
+
+        alert("Foto berhasil diperbarui (disimpan di perangkat kamu)!");
+    };
+
+    reader.readAsDataURL(file);
+});
+
+function toggleEditProfile() {
+    const box = document.getElementById("edit-profile-box");
+    const arrow = document.getElementById("edit-profile-arrow");
+
+    if (box.style.display === "block") {
+        box.style.display = "none";
+        arrow.classList.remove("rotate");
+    } else {
+        box.style.display = "block";
+        arrow.classList.add("rotate");
+
+        // isi otomatis
+        const user = window.getFirebaseUser();
+        const localUser = JSON.parse(localStorage.getItem("keloladuit_user") || "{}");
+
+        document.getElementById("edit-username-input").value =
+            localUser.fullname || user?.displayName || "";
+
+        document.getElementById("edit-email-input").value =
+            localUser.email || user?.email || "";
+    }
+}
+window.toggleEditProfile = toggleEditProfile;
+
+document.getElementById("save-profile-btn").addEventListener("click", async () => {
+    const newName = document.getElementById("edit-username-input").value.trim();
+    const newEmail = document.getElementById("edit-email-input").value.trim();
+
+    const user = window.getFirebaseUser();
+    if (!user) return alert("Kamu belum login.");
+
+    try {
+        // Update Firebase Auth (username)
+        if (newName && newName !== user.displayName) {
+            await window.updateFirebaseProfile({ displayName: newName });
+        }
+
+        // Update Firebase Auth (email)
+        if (newEmail && newEmail !== user.email) {
+            await window.updateFirebaseEmail(newEmail);
+        }
+
+        // Simpan ke localStorage
+        let localUser = JSON.parse(localStorage.getItem("keloladuit_user") || "{}");
+        localUser.fullname = newName;
+        localUser.email = newEmail;
+        localStorage.setItem("keloladuit_user", JSON.stringify(localUser));
+
+        updateProfile();
+        alert("Profil berhasil diperbarui!");
+
+    } catch (err) {
+        console.error(err);
+        alert("Gagal memperbarui profil.");
+    }
+});
+
+function renderPagination(totalRows) {
+  const totalPages = Math.ceil(totalRows / rowsPerPage);
+  const paginationContainer = document.getElementById("pagination");
+
+  paginationContainer.innerHTML = "";
+
+  for (let i = 1; i <= totalPages; i++) {
+    const btn = document.createElement("button");
+    btn.textContent = i;
+    btn.className = "pagination-btn";
+
+    if (i === currentPage) btn.classList.add("active");
+
+    btn.addEventListener("click", () => {
+      currentPage = i;
+      renderTransactions();
+    });
+
+    paginationContainer.appendChild(btn);
+  }
+}
+
+function renderTransactions() {
+  const tbody = document.getElementById("transactions-body");
+  tbody.innerHTML = "";
+
+  transactionsData.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  const start = (currentPage - 1) * rowsPerPage;
+  const end = start + rowsPerPage;
+
+  const pageItems = transactionsData.slice(start, end);
+
+  pageItems.forEach((t) => {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${t.date}</td>
+      <td>${t.description}</td>
+      <td class="${t.type}">${t.type === "income" ? "Pemasukan" : "Pengeluaran"}</td>
+      <td>${t.payment}</td>
+      <td>${formatCurrency(t.amount)}</td>
+      <td><button class="delete-btn" onclick="deleteTransaction('${t.id}')">Hapus</button></td>
+    `;
+    tbody.appendChild(row);
+  });
+
+  renderPagination(transactionsData.length);
 }

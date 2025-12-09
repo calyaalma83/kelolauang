@@ -8,7 +8,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-</head>
 <body>
     <div class="header">
         <img src="assets/logo.png">
@@ -20,15 +19,15 @@
             <div class="summary-cards">
                 <div class="summary-card income">
                     <h3>Total Pemasukan</h3>
-                    <div class="amount" id="total-income">Rp 0</div>
+                    <div class="amount" id="profile-total-income">Rp 0</div>
                 </div>
                 <div class="summary-card expense">
                     <h3>Total Pengeluaran</h3>
-                    <div class="amount" id="total-expense">Rp 0</div>
+                    <div class="amount" id="profile-total-expense">Rp 0</div>
                 </div>
                 <div class="summary-card balance">
                     <h3>Saldo</h3>
-                    <div class="amount" id="balance">Rp 0</div>
+                    <div class="amount" id="profile-balance">Rp 0</div>
                 </div>
             </div>
 
@@ -92,6 +91,8 @@
                         <tbody id="transactions-body">
                         </tbody>
                     </table>
+
+                    <div id="pagination" class="pagination"></div>
 
                     <div class="section" id="smart-insight" style="margin-top: 20px;">
                         <h2>Analisis Bulanan</h2>
@@ -163,12 +164,26 @@
         <!-- Profile Page -->
         <div class="page" id="profile-page">
             <div class="profile-section">
-                <div class="profile-avatar"></div>
+
+                <!-- FOTO PROFIL -->
+                <div class="profile-avatar" id="profile-avatar"></div>
+
+                <!-- INFO + EDIT USERNAME -->
                 <div class="profile-info">
-                    <h2>Pengguna KelolaDuit</h2>
-                    <p style="color: #666;">Bergabung sejak <span id="profile-join-date">-</span> </p>
+                    <h2 id="profile-username">
+                        Pengguna KelolaDuit
+                        <span class="edit-username" onclick="openEditUsernameModal()">✏️</span>
+                    </h2>
+                    <p style="color: #666;">Bergabung sejak <span id="profile-join-date">-</span></p>
                 </div>
 
+                <!-- GANTI FOTO PROFIL -->
+                <div class="profile-upload">
+                    <label for="profile-image-input" class="upload-btn">Ganti Foto Profil</label>
+                    <input type="file" id="profile-image-input" accept="image/*" style="display:none">
+                </div>
+
+                <!-- STATISTIK -->
                 <div class="profile-stats">
                     <div class="profile-stat">
                         <div class="label">Total Transaksi</div>
@@ -188,11 +203,150 @@
                     </div>
                 </div>
 
-                <div style="margin-top: 30px; text-align: center; color: #666; font-size: 14px;">
-                    <p>💡 Tips: Catat semua transaksimu untuk</p>
-                    <p>kontrol keuangan yang lebih baik!</p>
+                <!-- MENU: EDIT PROFILE, TIPS, FAQ -->
+                <div class="profile-menu">
+
+                    <!-- EDIT PROFILE (USERNAME + EMAIL) -->
+                    <div class="menu-card" onclick="toggleEditProfile()">
+                        <div class="menu-left">
+                            <span class="menu-icon">⚙️</span>
+                            <div>
+                                <h4>Edit Profil</h4>
+                                <p>Username & Email</p>
+                            </div>
+                        </div>
+                        <span class="menu-arrow" id="edit-profile-arrow">›</span>
+                    </div>
+
+                    <div id="edit-profile-box" class="faq-hidden">
+                        <div class="edit-profile-fields">
+                            <label>Username</label>
+                            <input type="text" id="edit-username-input" placeholder="Masukkan username baru">
+
+                            <label>Email</label>
+                            <input type="email" id="edit-email-input" placeholder="Masukkan email baru">
+
+                            <button id="save-profile-btn" class="save-username-btn">Simpan Perubahan</button>
+                        </div>
+                    </div>
+
+                    <!-- Tips Hemat -->
+                    <div class="menu-card" onclick="toggleTips()">
+                        <div class="menu-left">
+                            <span class="menu-icon">💡</span>
+                            <div>
+                                <h4>Tips Hemat</h4>
+                                <p>Cara pintar kelola uang</p>
+                            </div>
+                        </div>
+                        <span class="menu-arrow" id="tips-arrow">›</span>
+                    </div>
+
+                    <div id="tips-content" class="tips-hidden">
+                        <ul>
+                            <li><b>🎯 Buat Anggaran Bulanan</b><br>
+                                Tentukan batas pengeluaran bulanan.
+                            </li>
+                            <li><b>💰 Aturan 50/30/20</b><br>
+                                50% kebutuhan • 30% keinginan • 20% tabungan.
+                            </li>
+                            <li><b>🛒 Hindari Belanja Impulsif</b><br>
+                                Tunggu 24 jam sebelum membeli barang tak terencana.
+                            </li>
+                            <li><b>📝 Catat Semua Transaksi</b><br>
+                                Semua pengeluaran wajib dicatat.
+                            </li>
+                            <li><b>🎁 Manfaatkan Promo</b><br>
+                                Gunakan untuk kebutuhan, bukan keinginan.
+                            </li>
+                            <li><b>🏠 Masak di Rumah</b><br>
+                                Jauh lebih hemat dibanding makan di luar.
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- FAQ -->
+                    <div class="menu-card" onclick="toggleFAQBox()">
+                        <div class="menu-left">
+                            <span class="menu-icon">❓</span>
+                            <div>
+                                <h4>FAQ</h4>
+                                <p>Pertanyaan yang sering ditanyakan</p>
+                            </div>
+                        </div>
+                        <span class="menu-arrow" id="faq-main-arrow">›</span>
+                    </div>
+
+                    <div id="faq-box" class="faq-hidden">
+
+                        <div class="faq-item">
+                            <div class="faq-question" onclick="toggleFAQ(this)">
+                                <span>Bagaimana cara menambah transaksi?</span>
+                                <span class="faq-arrow">▼</span>
+                            </div>
+                            <div class="faq-answer">
+                                Kamu bisa menambah transaksi di Dashboard lalu klik “Tambah Transaksi”.
+                            </div>
+                        </div>
+
+                        <div class="faq-item">
+                            <div class="faq-question" onclick="toggleFAQ(this)">
+                                <span>Apakah data saya aman?</span>
+                                <span class="faq-arrow">▼</span>
+                            </div>
+                            <div class="faq-answer">
+                                Data tersimpan di perangkatmu dan tidak dikirim ke server eksternal.
+                            </div>
+                        </div>
+
+                        <div class="faq-item">
+                            <div class="faq-question" onclick="toggleFAQ(this)">
+                                <span>Bagaimana melihat riwayat bulan lalu?</span>
+                                <span class="faq-arrow">▼</span>
+                            </div>
+                            <div class="faq-answer">
+                                Masuk ke menu Riwayat untuk melihat grafik dan detail tiap bulan.
+                            </div>
+                        </div>
+
+                        <div class="faq-item">
+                            <div class="faq-question" onclick="toggleFAQ(this)">
+                                <span>Bisakah export ke PDF?</span>
+                                <span class="faq-arrow">▼</span>
+                            </div>
+                            <div class="faq-answer">
+                                Bisa. Tekan “Export PDF” di Dashboard atau halaman detail bulan.
+                            </div>
+                        </div>
+
+                        <div class="faq-item">
+                            <div class="faq-question" onclick="toggleFAQ(this)">
+                                <span>Bagaimana cara menghapus transaksi?</span>
+                                <span class="faq-arrow">▼</span>
+                            </div>
+                            <div class="faq-answer">
+                                Klik tombol merah “Hapus” pada tabel transaksi di Dashboard.
+                            </div>
+                        </div>
+
+                        <div class="faq-item">
+                            <div class="faq-question" onclick="toggleFAQ(this)">
+                                <span>Apa itu Analisis Bulanan?</span>
+                                <span class="faq-arrow">▼</span>
+                            </div>
+                            <div class="faq-answer">
+                                Insight otomatis tentang pengeluaran dan kebiasaan keuanganmu.
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
+                <!-- FOOTER TIPS -->
+                <div style="margin-top: 20px; text-align: center; color: #666; font-size: 14px;">
+                    <p>💡 Catat semua transaksimu agar keuanganmu lebih terkontrol!</p>
+                </div>
+
+                <!-- BUTTON AKUN -->
                 <div class="account-buttons">
                     <button class="btn-logout" onclick="logoutUser()">Logout</button>
                     <button class="btn-delete" onclick="deleteUserAccount()">Hapus Akun</button>
