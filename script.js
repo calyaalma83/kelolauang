@@ -552,7 +552,9 @@ document.getElementById("transaction-form").addEventListener("submit", async fun
   const amount = parseFloat(document.getElementById("amount").value) || 0;
   const type = document.getElementById("type").value;
   const payment = document.getElementById("payment-method").value;
-  const date = document.getElementById("date").value;
+  const dateInput = document.getElementById("date").value;
+  const now = new Date();
+  const date = dateInput + "T" + now.toTimeString().slice(0, 5);
 
   const dt = new Date(date);
   const monthKey = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}`;
@@ -582,30 +584,81 @@ if (exportBtn) {
 
 function exportCurrentMonthPDF() {
   const { jsPDF } = window.jspdf;
-  const doc = new jsPDF("p", "pt", "a4");
+  const doc = new jsPDF();
 
-  doc.setFontSize(18);
-  doc.text("Laporan Transaksi Bulan Ini", 40, 50);
-
-  let y = 90;
   const monthData = transactions[currentMonth] || [];
 
-  monthData.forEach(t => {
-    doc.setFontSize(12);
-    doc.text(
-      `${formatDate(t.date)} | ${t.description} | ${t.payment} | ${formatCurrency(Number(t.amount || 0))}`,
-      40,
-      y
-    );
-    y += 20;
-    // jika melebihi halaman, tambahkan halaman baru
-    if (y > 750) {
-      doc.addPage();
-      y = 40;
-    }
+  // Judul
+  doc.setFontSize(18);
+
+  // Data untuk tabel
+  let tableData = [];
+  let saldoBerjalan = 0;
+
+  monthData
+    .sort((a, b) => new Date(a.date) - new Date(b.date))
+    .forEach(t => {
+      const amount = Number(t.amount || 0);
+
+      if (t.type === "income") saldoBerjalan += amount;
+      else saldoBerjalan -= amount;
+
+      tableData.push([
+        formatDate(t.date),
+        t.description,
+        t.type === "income" ? formatCurrency(amount) : "-",
+        t.type === "expense" ? formatCurrency(amount) : "-",
+        formatCurrency(saldoBerjalan),
+        t.payment
+      ]);
+    });
+
+  const formattedMonth = getMonthName(currentMonth);
+
+  // --- Ambil nama pengguna ---
+  const user = window.getFirebaseUser();
+  const localUser = JSON.parse(localStorage.getItem("keloladuit_user") || "{}");
+
+  const username =
+    (user && user.displayName) ||
+    localUser.fullname ||
+    localUser.displayName ||
+    "Pengguna KelolaDuit";
+
+  // === HEADER ===
+  doc.setFont("Helvetica", "bold");
+  doc.setFontSize(16);
+  doc.text("KelolaDuit", 14, 15);
+
+  doc.setFontSize(11);
+  doc.setFont("Helvetica", "normal");
+  doc.text(`Laporan Transaksi Bulan ${formattedMonth}`, 14, 25);
+
+  doc.text(`Pengguna: ${username}`, 14, 31);
+  doc.text(`Periode: ${formattedMonth}`, 14, 37);
+  doc.text(`Tanggal Dibuat: ${new Date().toLocaleDateString("id-ID")}`, 14, 43);
+
+  // garis pemisah
+  doc.setDrawColor(150);
+  doc.line(10, 50, 200, 50);
+
+  // atur posisi tabel mulai setelah header
+  let tableStartY = 55;
+
+  // Generate tabel
+  doc.autoTable({
+    head: [["Tanggal", "Deskripsi", "Pemasukan", "Pengeluaran", "Saldo", "Metode"]],
+    body: tableData,
+    startY: tableStartY,
+    margin: { left: 10, right: 10},
+    styles: { fontSize: 10, overflow: 'linebreak', cellPadding: 2 },
+    headStyles: { fillColor: [25, 118, 210] },
+    theme: "grid",
+    tableWidth: "auto",
+    halign: "center"
   });
 
-  doc.save("Laporan-Bulan-Ini.pdf");
+  doc.save(`Laporan-Bulan-${formattedMonth}.pdf`);
 }
 
 function toggleTips() {
@@ -785,7 +838,7 @@ function renderTransactions() {
   pageItems.forEach((t) => {
     const row = document.createElement("tr");
     row.innerHTML = `
-      <td>${t.date}</td>
+      <td>${formatDate(t.date)}</td>
       <td>${t.description}</td>
       <td class="${t.type}">${t.type === "income" ? "Pemasukan" : "Pengeluaran"}</td>
       <td>${t.payment}</td>
